@@ -1,0 +1,1 @@
+# Socket.IO event namespaces will be placed here
