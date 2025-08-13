@@ -16,6 +16,14 @@ function useAuth() {
   const [token, setToken] = useState<string | null>(localStorage.getItem('access_token'))
   useEffect(() => {
     axios.defaults.headers.common['Authorization'] = token ? `Bearer ${token}` : ''
+    if (token) {
+      axios.get('/api/auth/csrf-token').then(r => {
+        const t = (r.data && (r.data.csrf_token || r.data.token)) || r.data
+        if (t) axios.defaults.headers.common['X-CSRF-Token'] = t
+      }).catch(()=>{})
+    } else {
+      delete axios.defaults.headers.common['X-CSRF-Token']
+    }
   }, [token])
   return { token, setToken }
 }
