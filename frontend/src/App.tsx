@@ -10,6 +10,7 @@ import Posts from './pages/Posts'
 import Chat from './pages/Chat'
 import Settings from './pages/Settings'
 import Login from './pages/Login'
+import { registerServiceWorker } from './push'
 
 function useAuth() {
   const [token, setToken] = useState<string | null>(localStorage.getItem('access_token'))
@@ -22,6 +23,8 @@ function useAuth() {
 export default function App() {
   const { token, setToken } = useAuth()
   const navigate = useNavigate()
+
+  useEffect(() => { registerServiceWorker() }, [])
 
   function logout() {
     localStorage.removeItem('access_token')
