@@ -1,3 +1,4 @@
+import os
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager
@@ -12,4 +13,5 @@ migrate = Migrate()
 jwt = JWTManager()
 cors = CORS()
 limiter = Limiter(key_func=get_remote_address, default_limits=["200 per hour"]) 
-socketio = SocketIO(async_mode="threading")
+_socketio_mode = os.getenv("SOCKETIO_ASYNC_MODE", "threading")
+socketio = SocketIO(async_mode=_socketio_mode)
