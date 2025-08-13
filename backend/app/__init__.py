@@ -39,6 +39,7 @@ def create_app(config_object: type[Config] | None = None) -> Flask:
     from .routes.todos import todos_bp
     from .routes.channels import channels_bp
     from .routes.alerts import alerts_bp
+    from .routes.push import push_bp
 
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(users_bp, url_prefix="/api/users")
@@ -52,6 +53,7 @@ def create_app(config_object: type[Config] | None = None) -> Flask:
     app.register_blueprint(todos_bp, url_prefix="/api/todos")
     app.register_blueprint(channels_bp, url_prefix="/api/channels")
     app.register_blueprint(alerts_bp, url_prefix="/api/alerts")
+    app.register_blueprint(push_bp, url_prefix="/api/push")
 
     # Load Socket.IO event handlers
     from .sockets import chat as _chat_handlers  # noqa: F401
