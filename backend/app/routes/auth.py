@@ -7,7 +7,9 @@ import secrets
 
 from ..extensions import db
 from ..models import User
+from ..models.reset_token import PasswordResetToken
 from ..utils.csrf import generate_csrf_token, set_csrf_token, validate_csrf
+from ..utils.emailer import send_email
 
 CSRF_HEADER = 'X-CSRF-Token'
 
@@ -76,25 +78,35 @@ def refresh():
 
 @auth_bp.post("/forgot-password")
 def forgot_password():
-    # CSRF check is enforced in a future global hook; allow here if header matches
     data = request.get_json() or {}
     email = (data.get("email") or "").strip().lower()
     if not email:
         return {"error": "Email required"}, 400
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return {"message": "If the email exists, a reset link will be sent."}
+    token = PasswordResetToken.create_for(user.id)
+    base = request.url_root.rstrip('/')
+    reset_url = f"{base}/reset-password?token={token.token}"
+    send_email(user.email, "Reset your password", f"<p>Click to reset: <a href='{reset_url}'>Reset Password</a></p>")
     return {"message": "If the email exists, a reset link will be sent."}
 
 
 @auth_bp.post("/reset-password")
 def reset_password():
     data = request.get_json() or {}
-    email = (data.get("email") or "").strip().lower()
+    token_str = data.get("token")
     new_password = data.get("new_password") or ""
     if len(new_password) < 8:
         return {"error": "Password too short"}, 400
-
-    user = User.query.filter_by(email=email).first()
+    t = PasswordResetToken.query.filter_by(token=token_str, used=False).first()
+    from datetime import datetime
+    if not t or t.expires_at < datetime.utcnow():
+        return {"error": "Invalid or expired token"}, 400
+    user = User.query.get(t.user_id)
     if not user:
         return {"error": "User not found"}, 404
     user.password_hash = bcrypt.hash(new_password)
+    t.used = True
     db.session.commit()
     return {"message": "Password updated"}

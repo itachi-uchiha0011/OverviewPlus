@@ -43,3 +43,29 @@ def _upload_s3(file: FileStorage) -> Tuple[str, str]:
     s3.upload_fileobj(file, bucket, key, ExtraArgs={'ACL': 'public-read', 'ContentType': file.mimetype or 'application/octet-stream'})
     url = f"https://{bucket}.s3.{region}.amazonaws.com/{key}"
     return url, key
+
+
+def delete_file(key_or_name: str) -> None:
+    backend = current_app.config.get('STORAGE_BACKEND', 'local')
+    if backend == 's3' and current_app.config.get('AWS_S3_BUCKET') and not key_or_name.startswith('/'):
+        bucket = current_app.config['AWS_S3_BUCKET']
+        s3 = boto3.client(
+            's3',
+            aws_access_key_id=current_app.config.get('AWS_ACCESS_KEY_ID'),
+            aws_secret_access_key=current_app.config.get('AWS_SECRET_ACCESS_KEY'),
+            region_name=current_app.config.get('AWS_REGION', 'us-east-1'),
+        )
+        try:
+            s3.delete_object(Bucket=bucket, Key=key_or_name)
+        except Exception:
+            pass
+    else:
+        # local
+        upload_dir = current_app.config['UPLOAD_FOLDER']
+        name = key_or_name.rsplit('/', 1)[-1]
+        path = os.path.join(upload_dir, name)
+        try:
+            if os.path.exists(path):
+                os.remove(path)
+        except Exception:
+            pass

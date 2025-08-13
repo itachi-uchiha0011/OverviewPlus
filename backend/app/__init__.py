@@ -1,10 +1,12 @@
 import os
 from datetime import timedelta
-from flask import Flask
+from flask import Flask, request
 from dotenv import load_dotenv, find_dotenv
 
 from .config import Config
 from .extensions import db, migrate, jwt, cors, limiter, socketio
+from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
+from .utils.csrf import validate_csrf
 
 
 def create_app(config_object: type[Config] | None = None) -> Flask:
@@ -21,6 +23,24 @@ def create_app(config_object: type[Config] | None = None) -> Flask:
     cors.init_app(app, resources={r"/api/*": {"origins": app.config.get("CORS_ORIGINS", "*")}})
     limiter.init_app(app)
     socketio.init_app(app, cors_allowed_origins=app.config.get("CORS_ORIGINS", "*"))
+
+    # CSRF enforcement for mutating requests
+    @app.before_request
+    def _csrf_protect():
+        if request.method in {"POST", "PUT", "PATCH", "DELETE"} and request.path.startswith('/api/'):
+            # Exempt auth endpoints that need to work without CSRF
+            if any(request.path.startswith(p) for p in [
+                '/api/auth/login', '/api/auth/register', '/api/auth/refresh', '/api/auth/forgot-password', '/api/auth/reset-password'
+            ]):
+                return
+            try:
+                verify_jwt_in_request()
+                user_id = get_jwt_identity()
+            except Exception:
+                return {"error": "Unauthorized"}, 401
+            token = request.headers.get('X-CSRF-Token')
+            if not validate_csrf(user_id, token):
+                return {"error": "CSRF"}, 403
 
     # Start scheduler
     from .scheduler import start_alert_scheduler

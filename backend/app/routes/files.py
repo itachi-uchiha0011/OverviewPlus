@@ -6,7 +6,7 @@ from werkzeug.utils import secure_filename
 
 from ..extensions import db
 from ..models import FileObject
-from ..utils.storage import upload_file
+from ..utils.storage import upload_file, delete_file
 
 files_bp = Blueprint("files", __name__)
 
@@ -61,3 +61,14 @@ def list_files():
         }
         for f in files
     ]
+
+
+@files_bp.delete("/<int:file_id>")
+@jwt_required()
+def delete_file_route(file_id: int):
+    user_id = get_jwt_identity()
+    f = FileObject.query.filter_by(id=file_id, user_id=user_id).first_or_404()
+    delete_file(f.url)
+    db.session.delete(f)
+    db.session.commit()
+    return {"message": "Deleted"}
