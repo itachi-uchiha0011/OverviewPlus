@@ -4,6 +4,7 @@ from flask import Blueprint, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from ..extensions import db
 from ..models import JournalEntry, JournalTag
+from ..utils.sanitize import sanitize_html
 
 journal_bp = Blueprint("journal", __name__)
 
@@ -37,7 +38,7 @@ def create_entry():
     entry = JournalEntry(
         user_id=user_id,
         date=date.fromisoformat(body.get("date")) if body.get("date") else date.today(),
-        content_html=body.get("content_html", ""),
+        content_html=sanitize_html(body.get("content_html", "")),
         content_text=body.get("content_text"),
     )
     tag_names = body.get("tags") or []
@@ -57,7 +58,7 @@ def update_entry(entry_id: int):
     if "date" in body:
         entry.date = date.fromisoformat(body["date"]) if body["date"] else entry.date
     if "content_html" in body:
-        entry.content_html = body["content_html"]
+        entry.content_html = sanitize_html(body["content_html"]) if body["content_html"] else ""
     if "content_text" in body:
         entry.content_text = body["content_text"]
     if "tags" in body:

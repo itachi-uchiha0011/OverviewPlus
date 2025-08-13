@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react'
 import axios from 'axios'
+import { Bar } from 'react-chartjs-2'
+import { Chart as ChartJS, BarElement, CategoryScale, LinearScale, Tooltip, Legend } from 'chart.js'
+
+ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend)
 
 type DashboardData = {
   today: string
@@ -17,6 +21,15 @@ export default function Dashboard() {
   }, [])
 
   if (!data) return <div className="text-gray-500">Loading...</div>
+
+  const completed = data.habits.filter(h=>h.completed).length
+  const pending = data.habits.length - completed
+  const chartData = {
+    labels: ['Completed', 'Pending'],
+    datasets: [
+      { label: 'Habits', data: [completed, pending], backgroundColor: ['#16a34a', '#9ca3af'] }
+    ]
+  }
 
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -46,6 +59,10 @@ export default function Dashboard() {
       <section className="p-4 rounded border bg-white lg:col-span-2">
         <h2 className="font-semibold mb-3">Journal Today</h2>
         <p className="text-sm text-gray-600">Entries: {data.journal_entries_today}</p>
+      </section>
+      <section className="p-4 rounded border bg-white">
+        <h2 className="font-semibold mb-3">Habits Chart</h2>
+        <Bar data={chartData} options={{ responsive: true, plugins: { legend: { display: false }}}} />
       </section>
     </div>
   )

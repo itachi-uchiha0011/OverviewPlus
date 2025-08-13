@@ -6,6 +6,7 @@ from werkzeug.utils import secure_filename
 
 from ..extensions import db
 from ..models import FileObject
+from ..utils.storage import upload_file
 
 files_bp = Blueprint("files", __name__)
 
@@ -17,7 +18,7 @@ def _allowed(filename: str) -> bool:
 
 @files_bp.post("")
 @jwt_required()
-def upload_file():
+def upload_file_route():
     user_id = get_jwt_identity()
     if "file" not in request.files:
         return {"error": "No file"}, 400
@@ -25,21 +26,14 @@ def upload_file():
     if f.filename == "" or not _allowed(f.filename):
         return {"error": "Invalid file"}, 400
 
-    filename = secure_filename(f.filename)
-    unique_name = f"{uuid4().hex}_{filename}"
-    upload_dir = current_app.config["UPLOAD_FOLDER"]
-    os.makedirs(upload_dir, exist_ok=True)
-    path = os.path.join(upload_dir, unique_name)
-    f.save(path)
-
-    url = f"/uploads/{unique_name}"
+    url, key = upload_file(f)
 
     obj = FileObject(
         user_id=user_id,
-        filename=filename,
+        filename=f.filename,
         url=url,
         mime_type=f.mimetype,
-        size_bytes=os.path.getsize(path),
+        size_bytes=None,
         is_public=bool(request.form.get("is_public", False)),
         category_id=request.form.get("category_id"),
         page_id=request.form.get("page_id"),
