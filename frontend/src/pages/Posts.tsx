@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import axios from 'axios'
+import ReactQuill from 'react-quill'
+import 'react-quill/dist/quill.snow.css'
 
 type Post = { id:number; title:string; content_html:string; is_public:boolean; likes:number; comments:number }
 
@@ -23,7 +25,7 @@ export default function Posts(){
         <h2 className="font-semibold mb-3">New Post</h2>
         <div className="space-y-2">
           <input value={title} onChange={e=>setTitle(e.target.value)} placeholder="Title" className="border px-3 py-2 rounded w-full" />
-          <textarea value={content} onChange={e=>setContent(e.target.value)} rows={6} className="w-full border rounded p-2" placeholder="Content HTML" />
+          <ReactQuill value={content} onChange={setContent} className="bg-white" />
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={isPublic} onChange={e=>setIsPublic(e.target.checked)} /> Publish</label>
           <button onClick={add} className="px-4 rounded bg-brand text-white">Save</button>
         </div>

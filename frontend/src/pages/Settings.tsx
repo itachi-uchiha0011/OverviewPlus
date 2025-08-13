@@ -1,13 +1,21 @@
 import { useEffect, useState } from 'react'
 import axios from 'axios'
+import { subscribePush, unsubscribePush, sendTestPush } from '../push'
 
 export default function Settings(){
   const [me, setMe] = useState<any>(null)
   const [form, setForm] = useState<any>({})
+  const [pushStatus, setPushStatus] = useState<string>('')
 
   useEffect(()=>{
     axios.get('/api/users/me').then(r=>{ setMe(r.data); setForm(r.data) }).catch(()=>{})
   },[])
+
+  async function enablePush(){
+    try { await subscribePush(); setPushStatus('Subscribed'); } catch { setPushStatus('Failed'); }
+  }
+  async function disablePush(){ await unsubscribePush(); setPushStatus('Unsubscribed') }
+  async function testPush(){ await sendTestPush(); setPushStatus('Test sent') }
 
   function save(){ axios.put('/api/users/me', form).then(()=>alert('Saved')) }
 
@@ -25,12 +33,14 @@ export default function Settings(){
       <label className="block text-sm">Public Profile
         <input type="checkbox" checked={!!form.is_public} onChange={e=>setForm({...form, is_public: e.target.checked})} className="ml-2" />
       </label>
-      <label className="block text-sm">Theme
-        <select value={form.theme||'light'} onChange={e=>setForm({...form, theme: e.target.value})} className="border px-3 py-2 rounded w-full">
-          <option value="light">Light</option>
-          <option value="dark">Dark</option>
-        </select>
-      </label>
+      <div className="border-t pt-3">
+        <div className="flex items-center gap-2">
+          <button onClick={enablePush} className="px-3 py-1.5 rounded bg-brand text-white text-sm">Enable Push</button>
+          <button onClick={disablePush} className="px-3 py-1.5 rounded border text-sm">Disable</button>
+          <button onClick={testPush} className="px-3 py-1.5 rounded border text-sm">Test</button>
+          <span className="text-xs text-gray-600">{pushStatus}</span>
+        </div>
+      </div>
       <div className="text-right">
         <button onClick={save} className="px-4 rounded bg-brand text-white">Save</button>
       </div>
