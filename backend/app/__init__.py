@@ -1,14 +1,14 @@
 import os
 from datetime import timedelta
 from flask import Flask
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 
 from .config import Config
 from .extensions import db, migrate, jwt, cors, limiter, socketio
 
 
 def create_app(config_object: type[Config] | None = None) -> Flask:
-    load_dotenv()
+    load_dotenv(find_dotenv())
     app = Flask(__name__)
 
     # Config
