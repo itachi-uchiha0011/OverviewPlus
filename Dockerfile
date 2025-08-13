@@ -11,9 +11,12 @@ FROM python:3.13-slim AS backend
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 WORKDIR /app
 COPY backend/requirements.txt /app/backend/requirements.txt
-RUN python -m venv /app/venv && /app/venv/bin/pip install --upgrade pip && /app/venv/bin/pip install -r /app/backend/requirements.txt && /app/venv/bin/pip install gunicorn gevent
+RUN python -m venv /app/venv \
+ && /app/venv/bin/pip install --upgrade pip \
+ && /app/venv/bin/pip install -r /app/backend/requirements.txt \
+ && /app/venv/bin/pip install gunicorn gevent gevent-websocket
 COPY backend /app/backend
 COPY --from=frontend /app/frontend/dist /app/frontend_dist
-ENV FLASK_APP=backend/run.py SOCKETIO_ASYNC_MODE=gevent
+ENV FLASK_APP=backend/run.py SOCKETIO_ASYNC_MODE=gevent PYTHONPATH=/app
 EXPOSE 5000
-CMD ["/app/venv/bin/gunicorn", "-k", "geventwebsocket.gunicorn.workers.GeventWebSocketWorker", "-w", "1", "-b", "0.0.0.0:5000", "backend.run:app"]
+CMD ["sh","-c","/app/venv/bin/flask db upgrade && /app/venv/bin/gunicorn -k geventwebsocket.gunicorn.workers.GeventWebSocketWorker -w 1 -b 0.0.0.0:${PORT:-5000} backend.run:app"]
