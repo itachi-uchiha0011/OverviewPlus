@@ -9,7 +9,11 @@ class Config:
     DEBUG = os.getenv("DEBUG", "True").lower() == "true"
 
     # Database
-    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", "sqlite:///overview_plus.db")
+    _db_url = os.getenv("DATABASE_URL", "sqlite:///overview_plus.db")
+    if _db_url.startswith("postgresql://") and "+" not in _db_url:
+        # Prefer psycopg3 driver if installed
+        _db_url = _db_url.replace("postgresql://", "postgresql+psycopg://", 1)
+    SQLALCHEMY_DATABASE_URI = _db_url
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # JWT
