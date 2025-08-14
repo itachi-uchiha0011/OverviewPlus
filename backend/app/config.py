@@ -43,10 +43,14 @@ class Config:
         self.TELEGRAM_ADMIN_CHAT_ID = os.getenv("TELEGRAM_ADMIN_CHAT_ID")
 
         # Storage
+        self.STORAGE_BACKEND = os.getenv("STORAGE_BACKEND", "local")
         self.AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
         self.AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
         self.AWS_S3_BUCKET = os.getenv("AWS_S3_BUCKET")
         self.AWS_REGION = os.getenv("AWS_REGION", "ap-south-1")
+        self.SUPABASE_URL = os.getenv("SUPABASE_URL")
+        self.SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
+        self.SUPABASE_BUCKET = os.getenv("SUPABASE_BUCKET", "public")
         self.UPLOAD_FOLDER = os.getenv(
             "UPLOAD_FOLDER",
             os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "uploads")),
