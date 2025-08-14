@@ -1,0 +1,17 @@
+name: IP Update
+
+on:
+  schedule:
+    - cron: "0 */12 * * *"
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update DNS Exit record
+        run: |
+          curl "https://api.dnsexit.com/dns/ud/?apikey=${API_KEY}" -d "host=${HOST}"
+        env:
+          API_KEY: ${{ secrets.DNSEXIT_APIKEY }}
+          HOST: overviewplus.work.gd
