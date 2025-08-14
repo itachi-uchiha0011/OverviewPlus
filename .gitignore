@@ -1,0 +1,9 @@
+# Ignore local env and build artifacts
+.env
+/backend/.venv/
+/backend/uploads/
+**/__pycache__/
+/frontend/node_modules/
+/frontend/dist/
+.vscode/
+.DS_Store
