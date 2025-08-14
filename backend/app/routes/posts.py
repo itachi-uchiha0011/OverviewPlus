@@ -2,6 +2,7 @@ from flask import Blueprint, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from ..extensions import db
 from ..models import Post, Like, Comment
+from ..utils.sanitize import sanitize_html
 
 posts_bp = Blueprint("posts", __name__)
 
@@ -33,7 +34,7 @@ def create_post():
     post = Post(
         user_id=user_id,
         title=body.get("title"),
-        content_html=body.get("content_html"),
+        content_html=sanitize_html(body.get("content_html")),
         is_public=bool(body.get("is_public", False)),
         slug=body.get("slug"),
     )
@@ -48,9 +49,11 @@ def update_post(post_id: int):
     user_id = get_jwt_identity()
     post = Post.query.filter_by(id=post_id, user_id=user_id).first_or_404()
     body = request.get_json() or {}
-    for field in ["title", "content_html", "is_public", "slug"]:
+    for field in ["title", "is_public", "slug"]:
         if field in body:
             setattr(post, field, body[field])
+    if "content_html" in body:
+        post.content_html = sanitize_html(body.get("content_html") or "")
     db.session.commit()
     return {"message": "Updated"}
 

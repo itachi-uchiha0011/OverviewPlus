@@ -22,6 +22,10 @@ def create_app(config_object: type[Config] | None = None) -> Flask:
     limiter.init_app(app)
     socketio.init_app(app, cors_allowed_origins=app.config.get("CORS_ORIGINS", "*"))
 
+    # Start scheduler
+    from .scheduler import start_alert_scheduler
+    start_alert_scheduler(app)
+
     # Blueprints
     from .routes.auth import auth_bp
     from .routes.users import users_bp

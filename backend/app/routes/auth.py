@@ -3,11 +3,34 @@ from flask_jwt_extended import create_access_token, create_refresh_token, jwt_re
 from sqlalchemy.exc import IntegrityError
 from passlib.hash import bcrypt
 from email_validator import validate_email, EmailNotValidError
+import secrets
 
 from ..extensions import db
 from ..models import User
 
+CSRF_HEADER = 'X-CSRF-Token'
+
+_auth_csrf_tokens = {}
+
 auth_bp = Blueprint("auth", __name__)
+
+
+@auth_bp.get("/csrf-token")
+@jwt_required()
+def csrf_token():
+    user_id = get_jwt_identity()
+    token = secrets.token_urlsafe(32)
+    _auth_csrf_tokens[user_id] = token
+    return {"csrf_token": token}
+
+
+def _check_csrf():
+    try:
+        user_id = get_jwt_identity()
+    except Exception:
+        return True
+    token = request.headers.get(CSRF_HEADER)
+    return token and _auth_csrf_tokens.get(user_id) == token
 
 
 @auth_bp.post("/register")
@@ -63,18 +86,19 @@ def refresh():
 
 @auth_bp.post("/forgot-password")
 def forgot_password():
-    # Placeholder: integration with email sending and token
+    if not _check_csrf():
+        return {"error": "CSRF"}, 403
     data = request.get_json() or {}
     email = (data.get("email") or "").strip().lower()
     if not email:
         return {"error": "Email required"}, 400
-    # In production, generate token, store, email link
     return {"message": "If the email exists, a reset link will be sent."}
 
 
 @auth_bp.post("/reset-password")
 def reset_password():
-    # Placeholder for token-based reset
+    if not _check_csrf():
+        return {"error": "CSRF"}, 403
     data = request.get_json() or {}
     email = (data.get("email") or "").strip().lower()
     new_password = data.get("new_password") or ""

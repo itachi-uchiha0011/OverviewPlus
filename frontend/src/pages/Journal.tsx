@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import axios from 'axios'
+import ReactQuill from 'react-quill'
+import 'react-quill/dist/quill.snow.css'
 
 export default function Journal(){
   const [html, setHtml] = useState('')
@@ -17,7 +19,7 @@ export default function Journal(){
     <div className="grid gap-4 md:grid-cols-2">
       <div className="p-4 border rounded bg-white">
         <h2 className="font-semibold mb-3">New Entry</h2>
-        <textarea value={html} onChange={e=>setHtml(e.target.value)} rows={6} className="w-full border rounded p-2" placeholder="What I learned / Mistakes..." />
+        <ReactQuill value={html} onChange={setHtml} className="bg-white" />
         <div className="mt-2 text-right">
           <button onClick={add} className="px-4 rounded bg-brand text-white">Save</button>
         </div>
